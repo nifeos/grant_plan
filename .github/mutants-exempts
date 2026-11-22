@@ -3,5 +3,20 @@
 # A line without a reason is refused, and a line naming a survivor that no longer exists is
 # refused too, so this list can only shrink by a diff that says why.
 
-# Mutation census row carried from the source tree, as counts: caught 1014, missed 15, timeout 29, unviable 219.
-# The 15 missed mutant(s) are not listed here because the census did not record which; the first weekly mutation run names each, and each goes below as `<file>:<line> # <reason>`.
+src/command.rs:264 # RECURSIVE is `1 << 0`, and `1 >> 0` is the same bit
+src/expansion.rs:223 # `offer` returns on a name the set already holds, so no name equal to a held one reaches the comparison
+src/expansion.rs:392 # `offer` returns on a name the set already holds, so no name equal to a held one reaches the comparison
+src/line.rs:342 # `i *= 1` never advances, so the command-word scan never ends; the tests hang rather than pass
+src/line.rs:385 # `i *= 1` never advances, so the whitespace skip never ends; the tests hang rather than pass
+src/line.rs:417 # `j *= 1` never advances, so the redirection target scan never ends; the tests hang rather than pass
+src/word.rs:187 # `j *= 1` never advances, so the token scan never ends; the tests hang rather than pass
+src/lexing.rs:39 # `i *= 1` never advances, so the whitespace skip never ends; the tests hang rather than pass
+src/parsing.rs:32 # each mutant keeps the token loop running past its bounds or its last slot, so it never ends; the tests hang rather than pass
+src/parsing.rs:35 # each mutant keeps the whitespace skip from ending; the tests hang rather than pass
+src/parsing.rs:36 # `i *= 1` never advances, so the whitespace skip never ends; the tests hang rather than pass
+src/parsing.rs:39 # each mutant keeps the token scan from ending; the tests hang rather than pass
+src/parsing.rs:41 # `i -= 1` steps back and `i *= 1` stays put, so the token scan never ends; the tests hang rather than pass
+src/parsing.rs:337 # `i -= 1` steps back and `i *= 1` stays put on a misquoted token, so the walk never ends; the tests hang rather than pass
+src/parsing.rs:348 # `i -= 2` steps back and `i *= 2` stays at zero on `--mem` and its value, so the walk never ends; the tests hang rather than pass
+src/parsing.rs:350 # `i -= 1` steps back and `i *= 1` stays put on a trailing `--mem`, so the walk never ends; the tests hang rather than pass
+src/parsing.rs:379 # `i *= 1` never advances, so the token walk never ends; the tests hang rather than pass
