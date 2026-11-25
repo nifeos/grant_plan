@@ -74,8 +74,31 @@ assert_eq!(
 
 ## What is proven
 
-No Kani harness covers this crate yet. Host tests cover the parser, the planner, the expansion of
+Kani, a model checker that proves properties for every input up to a stated size, checks the
+properties below. Each harness has a falsification patch under `falsifications/`: a small defect
+that the harness must catch. Host tests cover the rest: the parser, the planner, the expansion of
 patterns into name sets, navigation across two directory grants and every refusal.
+
+- Reading a token's quotes never panics. A word is a slice of its token, and it is quoted only
+  when one pair of the same quote wraps the whole token.
+- Tokenizing a line yields only non-empty slices of the line, in order, and never more than the
+  caller's array holds.
+- Splitting a line on its pipes and redirections never indexes past the line, for the empty line
+  and every line of one byte: each byte the splitter treats specially, and one letter that stands
+  for every other byte.
+- A name set never holds more than eight names or 512 bytes of name, and never holds a name twice;
+  a refused push leaves it as it was.
+- A batch of names is always the front of the byte order: every matching name it leaves out sorts
+  after its last, so the next batch skips none.
+- A walk through directories moves all the way or not at all, and no walk goes above the holder's
+  own root.
+- The first interrupt asks a job to stop once, and the shell tears the job down once, within the
+  grace window, whether a second interrupt or the window brings it.
+
+The proofs need Kani 0.68.0, which `rustup` does not install: run
+`cargo install --locked kani-verifier --version 0.68.0`, then `cargo kani setup`, which downloads
+a model checker. After that, `cargo kani` runs all 9 harnesses, and `cargo kani --harness <name>`
+runs one. A test fails when that count and the source differ.
 
 ## Building and testing
 

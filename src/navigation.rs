@@ -641,6 +641,9 @@ impl Bindings {
     }
 }
 
+#[cfg(kani)]
+mod verification;
+
 #[cfg(test)]
 mod tests {
     use super::*;

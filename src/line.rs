@@ -478,6 +478,9 @@ fn check_redirect_patterns(n: usize, r: &Redirects<'_>) -> Result<(), Refusal> {
     Ok(())
 }
 
+#[cfg(kani)]
+mod verification;
+
 #[cfg(test)]
 mod tests {
     use super::*;

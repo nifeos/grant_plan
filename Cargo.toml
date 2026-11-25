@@ -29,6 +29,12 @@ semicolon_if_nothing_returned = "warn"
 manual_let_else = "warn"
 doc_markdown = "warn"
 
+# A name set's byte array is longer than CBMC tracks element by element by default (64), so without
+# this every read of it is symbolic and the expansion harnesses run out of memory.
+[package.metadata.kani]
+flags = { cbmc-args = ["--max-field-sensitivity-array-size", "1024"] }
+unstable = { unstable-options = true }
+
 [dependencies]
 # The matcher, and only the matcher. `byte_glob` is a total function on two byte strings with no
 # filesystem in it; deciding what a match grants is command-line logic, which is this crate's job.
@@ -41,3 +47,4 @@ grant_contract = { version = "0.1.0", git = "https://github.com/nifeos/grant_con
 # The argument page's layout: `argv` assembles a line's words onto it, so the shell and the program
 # that reads the page share one definition.
 program_argument_contract = { version = "0.1.0", git = "https://github.com/nifeos/program_argument_contract", rev = "764e0e55a238252391b1c06135e228ef6b9436c8" }
+

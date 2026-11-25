@@ -481,6 +481,9 @@ impl<'a> ParsedInvocation<'a> {
     }
 }
 
+#[cfg(kani)]
+mod verification;
+
 #[cfg(test)]
 mod tests;
 

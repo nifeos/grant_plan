@@ -1,0 +1,22 @@
+Falsifies `grant_plan::parsing::verification::every_token_is_a_nonempty_slice_of_the_line_in_order`.
+
+The defect: the tokenizer stores a token even when the scan stopped where it started, so trailing whitespace yields an empty token.
+
+Expected to fail: the harness's `assert!(!t.is_empty())`.
+
+diff --git a/src/parsing.rs b/src/parsing.rs
+--- a/src/parsing.rs
++++ b/src/parsing.rs
+@@ -40,10 +40,8 @@
+             c.step(line[i]);
+             i += 1;
+         }
+-        if i > start {
+-            out[n] = &line[start..i];
+-            n += 1;
+-        }
++        out[n] = &line[start..i];
++        n += 1;
+     }
+     (&out[..n], &line[i..])
+ }
