@@ -1,9 +1,9 @@
 # grant_plan
 
-[![check](https://github.com/nifeos/grant_plan/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nifeos/grant_plan/actions/workflows/ci.yml?query=branch%3Amain)
-[![proofs](https://github.com/nifeos/grant_plan/actions/workflows/proofs.yml/badge.svg?branch=main)](https://github.com/nifeos/grant_plan/actions/workflows/proofs.yml?query=branch%3Amain)
-[![license](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/nifeos/grant_plan#license)
-[![minimum Rust version](https://img.shields.io/badge/rust-1.88%2B-blue.svg)](https://github.com/nifeos/grant_plan/blob/main/Cargo.toml)
+[![check](https://github.com/partsfoundry/grant_plan/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/partsfoundry/grant_plan/actions/workflows/ci.yml?query=branch%3Amain)
+[![proofs](https://github.com/partsfoundry/grant_plan/actions/workflows/proofs.yml/badge.svg?branch=main)](https://github.com/partsfoundry/grant_plan/actions/workflows/proofs.yml?query=branch%3Amain)
+[![license](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/partsfoundry/grant_plan#license)
+[![minimum Rust version](https://img.shields.io/badge/rust-1.88%2B-blue.svg)](https://github.com/partsfoundry/grant_plan/blob/main/Cargo.toml)
 
 The command-line logic of a capability shell, where naming a resource on the line is what grants
 it. `parse` turns a line of bytes into a builtin or a program invocation. `plan_against` places an
