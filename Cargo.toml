@@ -32,12 +32,12 @@ doc_markdown = "warn"
 [dependencies]
 # The matcher, and only the matcher. `byte_glob` is a total function on two byte strings with no
 # filesystem in it; deciding what a match grants is command-line logic, which is this crate's job.
-byte_glob = { version = "0.1.0", git = "https://github.com/nifeos/byte_glob", rev = "f5dae9092130be6d66f176d2e1942a4c36686818" }
+byte_glob = { version = "0.1.0", git = "https://github.com/partsfoundry/byte_glob", rev = "f5dae9092130be6d66f176d2e1942a4c36686818" }
 
 # The declarations a line is planned against: the manifest types, the slot numbers and the narrowing
 # by verb. A program reads them without linking this parser.
-grant_contract = { version = "0.1.0", git = "https://github.com/nifeos/grant_contract", rev = "d4e9ca29d51bc71d678aadaa00411eba953202b3" }
+grant_contract = { version = "0.1.0", git = "https://github.com/partsfoundry/grant_contract", rev = "a1e5b048a9e6a26305a47663eb3c8f7e966beb12" }
 
 # The argument page's layout: `argv` assembles a line's words onto it, so the shell and the program
 # that reads the page share one definition.
-program_argument_contract = { version = "0.1.0", git = "https://github.com/nifeos/program_argument_contract", rev = "764e0e55a238252391b1c06135e228ef6b9436c8" }
+program_argument_contract = { version = "0.1.0", git = "https://github.com/partsfoundry/program_argument_contract", rev = "764e0e55a238252391b1c06135e228ef6b9436c8" }
