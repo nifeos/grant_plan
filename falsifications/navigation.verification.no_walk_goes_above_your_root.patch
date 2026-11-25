@@ -1,0 +1,18 @@
+Falsifies `grant_plan::navigation::verification::no_walk_goes_above_your_root`.
+
+The defect: a `..` at the root is skipped instead of refused, so a walk that passes above the root succeeds and lands somewhere its steps do not count to.
+
+Expected to fail: the harness's `assert_eq!(result, Err(PathRefusal::AtYourRoot))`.
+
+diff --git a/src/navigation.rs b/src/navigation.rs
+--- a/src/navigation.rs
++++ b/src/navigation.rs
+@@ -353,7 +353,7 @@
+             match step {
+                 Step::Up => {
+                     if !next.ascend() {
+-                        return Err(PathRefusal::AtYourRoot);
++                        continue;
+                     }
+                 }
+                 Step::Down(name) => {

@@ -9,7 +9,7 @@ src/expansion.rs:392 # `offer` returns on a name the set already holds, so no na
 src/line.rs:342 # `i *= 1` never advances, so the command-word scan never ends; the tests hang rather than pass
 src/line.rs:385 # `i *= 1` never advances, so the whitespace skip never ends; the tests hang rather than pass
 src/line.rs:417 # `j *= 1` never advances, so the redirection target scan never ends; the tests hang rather than pass
-src/word.rs:187 # `j *= 1` never advances, so the token scan never ends; the tests hang rather than pass
+src/word.rs:188 # `j *= 1` never advances, so the token scan never ends; the tests hang rather than pass
 src/lexing.rs:39 # `i *= 1` never advances, so the whitespace skip never ends; the tests hang rather than pass
 src/parsing.rs:32 # each mutant keeps the token loop running past its bounds or its last slot, so it never ends; the tests hang rather than pass
 src/parsing.rs:35 # each mutant keeps the whitespace skip from ending; the tests hang rather than pass

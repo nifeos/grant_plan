@@ -1,0 +1,17 @@
+Falsifies `grant_plan::escalation::verification::the_first_interrupt_brings_one_teardown_within_the_grace_window`.
+
+The defect: the tick that runs the grace window out tears the job down but does not mark the policy spent, so every later tick tears it down again.
+
+Expected to fail: the harness's `assert!(is_reachable(&e))` after the tick that runs the window out, since the job is torn down and the window is left open with no tick in it.
+
+diff --git a/src/escalation.rs b/src/escalation.rs
+--- a/src/escalation.rs
++++ b/src/escalation.rs
+@@ -76,7 +76,6 @@
+         }
+         self.grace_left = self.grace_left.saturating_sub(1);
+         if self.grace_left == 0 {
+-            self.done = true;
+             InterruptAction::Forcible
+         } else {
+             InterruptAction::None

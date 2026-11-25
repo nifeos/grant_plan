@@ -1,0 +1,18 @@
+Falsifies `grant_plan::expansion::verification::a_batch_is_the_front_of_the_byte_order`.
+
+The defect: a name offered to a batch goes before the first name that sorts below it instead of after, so the batch is no longer in byte order.
+
+Expected to fail: the harness's `assert_eq!(names.ends[i], end)`, since the name offered lands first.
+
+diff --git a/src/expansion.rs b/src/expansion.rs
+--- a/src/expansion.rs
++++ b/src/expansion.rs
+@@ -220,7 +220,7 @@
+     /// grant.
+     fn keep_smallest(&mut self, name: &[u8], is_directory: bool) -> bool {
+         // Where it belongs: the first slot holding a name that sorts after it.
+-        let at = (0..self.n).find(|&i| self.name(i) > name).unwrap_or(self.n);
++        let at = (0..self.n).find(|&i| self.name(i) < name).unwrap_or(self.n);
+         let mut kept_all = true;
+         // Bounded by how many names sort after it, not by the room check alone, so the walk
+         // always ends.

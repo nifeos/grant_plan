@@ -20,12 +20,12 @@ pub const MAXIMUM_WORDS_NAME_BYTES: usize = 16;
 /// rule the filesystem server enforces: a path is not something this shell can express,
 /// because there is no namespace here to walk.
 pub fn is_valid_file_name(name: &[u8]) -> bool {
+    // One pass for both separators: `contains` searches with memchr, too costly for the proofs.
     !name.is_empty()
         && name.len() <= MAXIMUM_FILE_NAME_BYTES
         && name != b"."
         && name != b".."
-        && !name.contains(&b'/')
-        && !name.contains(&b'\\')
+        && !name.iter().any(|&b| b == b'/' || b == b'\\')
 }
 
 /// Split off the first whitespace-delimited word; return `(word, rest)` where `rest` keeps its

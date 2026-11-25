@@ -1,0 +1,18 @@
+Falsifies `grant_plan::word::verification::a_word_is_a_slice_of_its_token_and_quoted_only_when_wrapped`.
+
+The defect: a quote that closes before the end of the token is taken as wrapping all of it, so `'a'b` reads as the quoted word `a'`.
+
+Expected to fail: the harness's `assert!(!w.text.contains(&quote))`, or its check that a quoted word ends in its quote.
+
+diff --git a/src/word.rs b/src/word.rs
+--- a/src/word.rs
++++ b/src/word.rs
+@@ -156,7 +156,7 @@
+     let inner = &token[1..];
+     match inner.iter().position(|&b| b == first) {
+         // The closing quote is the last byte, so the pair wraps the whole token.
+-        Some(at) if at + 2 == token.len() => Ok(Word {
++        Some(at) if at + 2 <= token.len() => Ok(Word {
+             text: &token[1..token.len() - 1],
+             quoted: true,
+         }),

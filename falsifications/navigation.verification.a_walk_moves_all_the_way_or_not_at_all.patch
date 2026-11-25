@@ -1,0 +1,17 @@
+Falsifies `grant_plan::navigation::verification::a_walk_moves_all_the_way_or_not_at_all`.
+
+The defect: a walk refused for a name that is not one keeps the steps it took before that name, so a refused walk is half taken.
+
+Expected to fail: the harness's `assert!(is_same_position(&here, &before))` on a refused walk.
+
+diff --git a/src/navigation.rs b/src/navigation.rs
+--- a/src/navigation.rs
++++ b/src/navigation.rs
+@@ -358,6 +358,7 @@
+                 }
+                 Step::Down(name) => {
+                     if !is_valid_component(name) {
++                        *self = next;
+                         return Err(PathRefusal::NotAName);
+                     }
+                     if next.depth == MAXIMUM_DEPTH {

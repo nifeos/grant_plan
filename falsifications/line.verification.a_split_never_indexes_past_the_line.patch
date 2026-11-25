@@ -1,0 +1,18 @@
+Falsifies `grant_plan::line::verification::a_split_never_indexes_past_the_line`.
+
+The defect: the output operator reads the byte after it, to tell `>` from `>>`, without first asking whether there is one, so a line that ends with the operator indexes past its end.
+
+Expected to fail: the bounds check on `line[i + 1]` inside `read_redirections`.
+
+diff --git a/src/line.rs b/src/line.rs
+--- a/src/line.rs
++++ b/src/line.rs
+@@ -372,7 +372,7 @@
+         let (side, append, width) = match line[i] {
+             b'<' => (GrantSide::In, false, 1),
+             b'>' => {
+-                let a = line.get(i + 1) == Some(&b'>');
++                let a = line[i + 1] == b'>';
+                 (GrantSide::Out, a, if a { 2 } else { 1 })
+             }
+             _ => {

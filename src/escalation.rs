@@ -95,5 +95,8 @@ impl Default for Escalation {
     }
 }
 
+#[cfg(kani)]
+mod verification;
+
 #[cfg(test)]
 mod tests;

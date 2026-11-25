@@ -1,0 +1,18 @@
+Falsifies `grant_plan::expansion::verification::a_set_never_holds_more_names_than_it_counts`.
+
+The defect: the room check lets a full set take one more name, past the end of its arrays.
+
+Expected to fail: the bounds check on `self.ends[at]` inside `insert` on the ninth push.
+
+diff --git a/src/expansion.rs b/src/expansion.rs
+--- a/src/expansion.rs
++++ b/src/expansion.rs
+@@ -160,7 +160,7 @@
+ 
+     /// Whether `len` more bytes of name fit beside what is held.
+     fn has_room_for(&self, len: usize) -> bool {
+-        self.n < MAXIMUM_NAMES && self.name_bytes() + len <= MAXIMUM_NAME_SET_BYTES
++        self.n <= MAXIMUM_NAMES && self.name_bytes() + len <= MAXIMUM_NAME_SET_BYTES
+     }
+ 
+     /// Add a name. [`NameSetFull`] if the set is full, by count or by bytes, or the name cannot

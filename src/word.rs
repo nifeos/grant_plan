@@ -147,7 +147,8 @@ pub fn read(token: &[u8]) -> Result<Word<'_>, Refusal> {
         return Ok(Word::bare(token));
     };
     if first != SINGLE && first != DOUBLE {
-        return if token.contains(&SINGLE) || token.contains(&DOUBLE) {
+        // One pass for both quotes: `contains` searches with memchr, too costly for the proofs.
+        return if token.iter().any(|&b| b == SINGLE || b == DOUBLE) {
             Err(Refusal::PartlyQuoted)
         } else {
             Ok(Word::bare(token))
@@ -188,6 +189,9 @@ pub fn token_end(line: &[u8], i: usize, stop: &dyn Fn(u8) -> bool) -> usize {
     }
     j
 }
+
+#[cfg(kani)]
+mod verification;
 
 #[cfg(test)]
 mod tests {

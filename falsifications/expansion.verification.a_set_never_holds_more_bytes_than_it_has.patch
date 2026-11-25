@@ -1,0 +1,18 @@
+Falsifies `grant_plan::expansion::verification::a_set_never_holds_more_bytes_than_it_has`.
+
+The defect: the room check allows one name's worth of bytes past the set's storage, so a third long name is copied past its end.
+
+Expected to fail: the harness's `assert_eq!(pushed, fits)`, or the bounds check on the copy inside `insert`.
+
+diff --git a/src/expansion.rs b/src/expansion.rs
+--- a/src/expansion.rs
++++ b/src/expansion.rs
+@@ -160,7 +160,7 @@
+ 
+     /// Whether `len` more bytes of name fit beside what is held.
+     fn has_room_for(&self, len: usize) -> bool {
+-        self.n < MAXIMUM_NAMES && self.name_bytes() + len <= MAXIMUM_NAME_SET_BYTES
++        self.n < MAXIMUM_NAMES && self.name_bytes() + len <= MAXIMUM_NAME_SET_BYTES + MAXIMUM_NAME_BYTES
+     }
+ 
+     /// Add a name. [`NameSetFull`] if the set is full, by count or by bytes, or the name cannot
