@@ -25,7 +25,7 @@ fn a_split_never_indexes_past_the_line() {
 
 /// The bytes a line is drawn from: a letter, standing for every byte the splitter does not treat
 /// specially, then every byte it does.
-const ALPHABET: [u8; 9] = [b'a', b' ', b'|', b'<', b'>', b'2', b'\'', b'"', b'*'];
+const ALPHABET: [u8; 9] = *b"a |<>2'\"*";
 
 /// Splits `line` and checks what comes back.
 fn check_split(line: &[u8]) {
