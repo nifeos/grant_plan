@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "byte_glob"
 version = "0.1.0"
-source = "git+https://github.com/partsfoundry/byte_glob?rev=f5dae9092130be6d66f176d2e1942a4c36686818#f5dae9092130be6d66f176d2e1942a4c36686818"
+source = "git+https://github.com/partsfoundry/byte_glob?rev=f4ebfe62f8e6dcd3a348825026ae2d566beb5897#f4ebfe62f8e6dcd3a348825026ae2d566beb5897"
 
 [[package]]
 name = "grant_contract"
