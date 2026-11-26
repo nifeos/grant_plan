@@ -312,23 +312,47 @@ impl Refusal {
             Refusal::ArgumentsTooLong => {
                 "those words do not fit on its argument page (4,080 bytes, four more for each word)"
             }
-            // The scoped block's. Each says which form to reach for, because the refusal is the whole
-            // documentation of a spelling that ships provisional.
-            Refusal::ScopeMalformed => {
+            // The scoped block's, in `ScopedBlock::message`.
+            Refusal::ScopeMalformed => ScopedBlock::Malformed.message(),
+            Refusal::ScopeTooDeep => ScopedBlock::TooDeep.message(),
+            Refusal::ScopeCannotRestore => ScopedBlock::CannotRestore.message(),
+            Refusal::IsolationNotBuilt => ScopedBlock::IsolationNotBuilt.message(),
+            Refusal::GroupingParentheses => ScopedBlock::GroupingParentheses.message(),
+        }
+    }
+}
+
+/// The scoped block's refusals, apart from the rest of [`Refusal`] so that [`ScopedBlock::message`]
+/// lists exactly these cases and the compiler proves it does.
+#[derive(Clone, Copy)]
+enum ScopedBlock {
+    Malformed,
+    TooDeep,
+    CannotRestore,
+    IsolationNotBuilt,
+    GroupingParentheses,
+}
+
+impl ScopedBlock {
+    /// Each line says which form to reach for, because the refusal is the whole documentation of a
+    /// spelling that ships provisional.
+    fn message(self) -> &'static str {
+        match self {
+            ScopedBlock::Malformed => {
                 "a scoped block is 'scope { commands }' with nothing after the closing brace on \
                  its command: join what follows with ;, && or ||"
             }
-            Refusal::ScopeTooDeep => "scoped blocks nest at most 3 deep",
-            Refusal::ScopeCannotRestore => {
+            ScopedBlock::TooDeep => "scoped blocks nest at most 3 deep",
+            ScopedBlock::CannotRestore => {
                 "a scoped block cannot put back a background job it would start, stop, wait for \
                  or resume: the commands need an isolated child, 'swish -c', side is \
                  reserved and not built yet"
             }
-            Refusal::IsolationNotBuilt => {
+            ScopedBlock::IsolationNotBuilt => {
                 "'swish -c' is reserved for an isolated child shell and that child is not built \
                  yet: it needs a result endpoint of its own and a grant of the directory it stands in"
             }
-            Refusal::GroupingParentheses => {
+            ScopedBlock::GroupingParentheses => {
                 "( ) groups nothing in this shell: use 'scope { commands }' to keep the directory \
                  and names it changes, or 'swish -c' (reserved, not built yet) for an isolated child"
             }
