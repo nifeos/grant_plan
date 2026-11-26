@@ -38,7 +38,7 @@ unstable = { unstable-options = true }
 [dependencies]
 # The matcher, and only the matcher. `byte_glob` is a total function on two byte strings with no
 # filesystem in it; deciding what a match grants is command-line logic, which is this crate's job.
-byte_glob = { version = "0.1.0", git = "https://github.com/partsfoundry/byte_glob", rev = "f5dae9092130be6d66f176d2e1942a4c36686818" }
+byte_glob = { version = "0.1.0", git = "https://github.com/partsfoundry/byte_glob", rev = "f4ebfe62f8e6dcd3a348825026ae2d566beb5897" }
 
 # The declarations a line is planned against: the manifest types, the slot numbers and the narrowing
 # by verb. A program reads them without linking this parser.

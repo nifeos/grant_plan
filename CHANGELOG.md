@@ -6,6 +6,12 @@ sentence beside it.
 ## Unreleased
 
 - First version.
+- Removed `TwoRoots::resolve_from`, `TwoRoots::apply_from`, `Bindings::resolve_absolute` and
+  `Bindings::split_absolute` from the public interface. Only this crate's own tests called them.
+  `TwoRoots::resolve` and `Bindings::lookup` remain.
+- Rebuilt the refusal message lookup so the compiler proves it covers every scoped-block refusal,
+  with no unreachable arm. The messages are unchanged.
+- Pinned `byte_glob` to its current main (f4ebfe6), 15 commits newer than before.
 
 ## BUGS
 

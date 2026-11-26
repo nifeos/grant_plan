@@ -431,8 +431,7 @@ impl<'a> TwoRoots<'a> {
         self.resolve_absolute(&p)
     }
 
-    /// [`TwoRoots::resolve`]'s absolute-path half, split out so [`TwoRoots::resolve_from`] can
-    /// reach it without reparsing the token a second time.
+    /// [`TwoRoots::resolve`]'s absolute-path half.
     fn resolve_absolute(&self, p: &Path<'_>) -> Result<(GrantSide, DirectoryPath), PathRefusal> {
         self.try_resolve_absolute(p)
             .unwrap_or(Err(PathRefusal::NotAName))
@@ -464,40 +463,6 @@ impl<'a> TwoRoots<'a> {
                 .apply(rest)
                 .map(|_| (side, working_directory)),
         )
-    }
-
-    /// **A two-grant shell's real, single, moving position**, built on [`TwoRoots::resolve`] and
-    /// [`DirectoryPath::resolve`] rather than reimplementing either.
-    ///
-    /// A relative `token` resolves against `pos` in tree `side`, as for one grant; an absolute one
-    /// picks the tree by label, which is how a holder moves between trees (`cd /b/somewhere`). `..`
-    /// at either tree's own root is [`PathRefusal::AtYourRoot`], [`DirectoryPath::apply`]'s own clamp.
-    pub fn resolve_from(
-        &self,
-        side: GrantSide,
-        position: DirectoryPath,
-        token: &[u8],
-    ) -> Result<(GrantSide, DirectoryPath), PathRefusal> {
-        let p = path(token)?;
-        if p.is_from_root() {
-            self.resolve_absolute(&p)
-        } else {
-            Ok((side, position.resolve(&p)?))
-        }
-    }
-
-    /// [`TwoRoots::resolve_from`], applied: move `(which, pos)` by `token`. All-or-nothing, the
-    /// same rule [`DirectoryPath::apply`] already has: a refused move leaves both untouched.
-    pub fn apply_from(
-        &self,
-        side: &mut GrantSide,
-        position: &mut DirectoryPath,
-        token: &[u8],
-    ) -> Result<(), PathRefusal> {
-        let (w, p) = self.resolve_from(*side, *position, token)?;
-        *side = w;
-        *position = p;
-        Ok(())
     }
 }
 
@@ -613,31 +578,6 @@ impl Bindings {
     /// section with more than the two grant rows in it.
     pub fn iter(&self) -> impl Iterator<Item = &BindEntry> {
         self.entries.iter().flatten()
-    }
-
-    /// Split an absolute path's first component against this table: `None` if it does not name a
-    /// bound entry, so the caller can fall through to whatever "no bind matched" means for it.
-    /// `Some` gives the entry's own stored position **unresolved further** and the steps after the
-    /// label, the same split `TwoRoots`'s own absolute-path resolver makes for a grant label; a real
-    /// wire walk needs both separately (open the bind's own chain first, then continue), where
-    /// [`Bindings::resolve_absolute`] needs only their sum.
-    pub fn split_absolute<'p>(&self, p: &'p Path<'p>) -> Option<(DirectoryPath, &'p [Step<'p>])> {
-        let (label, rest) = match p.steps().split_first() {
-            Some((Step::Down(name), rest)) => (*name, rest),
-            _ => return None,
-        };
-        let entry = self.lookup(label)?;
-        Some((entry.position(), rest))
-    }
-
-    /// [`Bindings::split_absolute`], fully resolved: the bound position with the rest of the token
-    /// applied, or the [`PathRefusal`] applying it produced (the same [`PathRefusal::TooDeep`] /
-    /// [`PathRefusal::AtYourRoot`] a direct [`DirectoryPath::apply`] would give, since that is exactly what runs
-    /// underneath). `None` when the label matches no bound entry.
-    pub fn resolve_absolute(&self, p: &Path<'_>) -> Option<Result<DirectoryPath, PathRefusal>> {
-        let (base, rest) = self.split_absolute(p)?;
-        let mut position = base;
-        Some(position.apply(rest).map(|_| position))
     }
 }
 
@@ -1112,167 +1052,7 @@ mod tests {
         assert_eq!(working_directory.component(0), b"y");
     }
 
-    // ---- The real, single, moving `(which, position)` working directory ----
-
-    /// **A bare relative name resolves against `pos` inside whichever tree `side` currently
-    /// names**, identical to a one-grant [`DirectoryPath::resolve`], parameterized by which tree.
-    #[test]
-    fn a_relative_token_resolves_inside_the_current_tree() {
-        let roots = TwoRoots::new(b"a", b"b");
-        let mut position = DirectoryPath::root();
-        position.descend(b"here");
-        let (side, next) = roots
-            .resolve_from(GrantSide::Second, position, b"deeper")
-            .unwrap();
-        assert_eq!(
-            side,
-            GrantSide::Second,
-            "a relative token never switches trees"
-        );
-        assert_pwd(&next, b"/here/deeper");
-    }
-
-    /// **An absolute path both resolves and moves between trees**: `cd /b/somewhere` from
-    /// anywhere works with no new verb.
-    #[test]
-    fn an_absolute_token_moves_to_the_tree_it_names() {
-        let roots = TwoRoots::new(b"a", b"b");
-        let position = DirectoryPath::root();
-        let (side, next) = roots
-            .resolve_from(GrantSide::First, position, b"/b/elsewhere")
-            .unwrap();
-        assert_eq!(side, GrantSide::Second);
-        assert_pwd(&next, b"/elsewhere");
-    }
-
-    /// **`..` at either tree's own root refuses**, the same [`PathRefusal::AtYourRoot`] a one-grant
-    /// [`DirectoryPath::apply`] already gives, applied per-tree: standing at `b`'s own root, `..` does not
-    /// silently land in `a` or anywhere else.
-    #[test]
-    fn dot_dot_refuses_at_either_trees_own_root_rather_than_crossing() {
-        let roots = TwoRoots::new(b"a", b"b");
-        assert_eq!(
-            roots.resolve_from(GrantSide::Second, DirectoryPath::root(), b".."),
-            Err(PathRefusal::AtYourRoot),
-        );
-        // One level down and back up composes normally, same as a single grant.
-        let mut side = GrantSide::First;
-        let mut position = DirectoryPath::root();
-        roots
-            .apply_from(&mut side, &mut position, b"/a/sub")
-            .unwrap();
-        roots.apply_from(&mut side, &mut position, b"..").unwrap();
-        assert_eq!(side, GrantSide::First);
-        assert_pwd(&position, b"/");
-    }
-
-    /// **The starting position is the first-listed grant's own root** (`which = A`), matching the
-    /// "slot 0 is always the first grant" precedent: a relative
-    /// token typed from the start resolves inside `a`, with nothing special about the start
-    /// beyond being where a fresh two-grant holder stands.
-    #[test]
-    fn the_starting_position_is_grant_as_own_root() {
-        let roots = TwoRoots::new(b"a", b"b");
-        let start = (GrantSide::First, DirectoryPath::root());
-        let (side, position) = roots.resolve_from(start.0, start.1, b"x").unwrap();
-        assert_eq!(side, GrantSide::First);
-        assert_eq!(position.component(0), b"x");
-    }
-
-    /// [`TwoRoots::apply_from`] is all-or-nothing, [`DirectoryPath::apply`]'s own rule composed rather than
-    /// reimplemented: a refused move leaves both `side` and `pos` exactly where they were.
-    #[test]
-    fn apply_from_moves_nothing_on_a_refusal() {
-        let roots = TwoRoots::new(b"a", b"b");
-        let mut side = GrantSide::First;
-        let mut position = DirectoryPath::root();
-        position.descend(b"sub");
-        assert_eq!(
-            roots.apply_from(&mut side, &mut position, b".."),
-            Ok(()),
-            "one legal ascent",
-        );
-        assert_eq!(side, GrantSide::First);
-        assert_pwd(&position, b"/");
-        assert_eq!(
-            roots.apply_from(&mut side, &mut position, b".."),
-            Err(PathRefusal::AtYourRoot),
-        );
-        assert_eq!(side, GrantSide::First, "a refusal moved nothing");
-        assert_pwd(&position, b"/");
-    }
-
     // ---- `bind`: a value under a name ----
-
-    /// **A bound entry resolves as the position it was given**, no more and no less: the whole of
-    /// "a bind entry is a value, not a capability."
-    #[test]
-    fn a_bound_name_resolves_to_the_position_it_was_given() {
-        let mut binds = Bindings::default();
-        let mut target = DirectoryPath::root();
-        target.descend(b"logs");
-        target.descend(b"2026");
-        binds.add(b"recent", target).unwrap();
-
-        let p = path(b"/recent").unwrap();
-        let working_directory = binds.resolve_absolute(&p).unwrap().unwrap();
-        assert_eq!(working_directory, target);
-    }
-
-    /// **The rest of the token composes past the bound name**, exactly as it would past a grant
-    /// label: `/recent/report.txt` is the bind's own position plus one more descent.
-    #[test]
-    fn a_token_composes_past_a_bound_name() {
-        let mut binds = Bindings::default();
-        let mut target = DirectoryPath::root();
-        target.descend(b"logs");
-        binds.add(b"recent", target).unwrap();
-
-        let p = path(b"/recent/report.txt").unwrap();
-        let working_directory = binds.resolve_absolute(&p).unwrap().unwrap();
-        assert_pwd(&working_directory, b"/logs/report.txt");
-    }
-
-    /// **`..` past a bound name does not stop at the bind**: it ascends into the tree the bind
-    /// points at, exactly as a direct walk to that position would, because [`Bindings`] reuses
-    /// [`DirectoryPath::apply`] rather than re-clamping at the alias. A bind can misdirect (name a different
-    /// place than its own words suggest) but never grant more than the resolver could already
-    /// reach by typing the real path.
-    #[test]
-    fn dot_dot_past_a_bound_name_climbs_the_real_tree_not_a_fabricated_root() {
-        let mut binds = Bindings::default();
-        let mut target = DirectoryPath::root();
-        target.descend(b"a");
-        target.descend(b"b");
-        binds.add(b"recent", target).unwrap();
-
-        // One `..` lands where a direct walk to `/a` would: the bind's own parent, not refused.
-        let p = path(b"/recent/..").unwrap();
-        let working_directory = binds.resolve_absolute(&p).unwrap().unwrap();
-        assert_pwd(&working_directory, b"/a");
-
-        // A second reaches the real root, and a third refuses there: the same wall a direct `/a/b`
-        // would meet, not a wall invented at the alias.
-        let p = path(b"/recent/../..").unwrap();
-        let working_directory = binds.resolve_absolute(&p).unwrap().unwrap();
-        assert_pwd(&working_directory, b"/");
-        let p = path(b"/recent/../../..").unwrap();
-        assert_eq!(
-            binds.resolve_absolute(&p).unwrap(),
-            Err(PathRefusal::AtYourRoot)
-        );
-    }
-
-    /// A name that matches no bound entry is `None`, not a refusal: the caller (a one-grant
-    /// [`crate::ShellHoldings`] or a [`TwoRoots`]) still gets to decide what "nothing bound here" means
-    /// for it, which is exactly the split [`TwoRoots::try_resolve_absolute`] makes for a grant
-    /// label.
-    #[test]
-    fn an_unbound_name_is_none_not_a_refusal() {
-        let binds = Bindings::default();
-        let p = path(b"/nope").unwrap();
-        assert_eq!(binds.resolve_absolute(&p), None);
-    }
 
     /// A name already bound refuses a second bind, and the first is untouched: no silent
     /// shadowing, because a rebind the user did not ask for is exactly the quiet authority change
@@ -1287,8 +1067,7 @@ mod tests {
         second.descend(b"b");
         assert_eq!(binds.add(b"x", second), Err(BindRefusal::AlreadyBound),);
         // Still resolves to the first, untouched.
-        let p = path(b"/x").unwrap();
-        assert_eq!(binds.resolve_absolute(&p).unwrap().unwrap(), first);
+        assert_eq!(binds.lookup(b"x").unwrap().position(), first);
     }
 
     /// The table holds at most [`MAXIMUM_BINDS`], loud rather than silently dropping one.
